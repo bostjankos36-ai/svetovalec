@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Škropilni svetovalec za vinsko trto</title>
+<style>
+  :root {
+    --galica: #1b7a8c;   /* modra galica */
+    --galica-t: #d9ecef;
+    --list: #5e7f2e;
+    --zemlja: #2b2a26;
+    --apno: #eef3f1;
+    --grozd: #5a2444;
+    --crta: #c5d2ce;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--apno); color: var(--zemlja);
+    font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    font-size: 17px; line-height: 1.5;
+  }
+  header { background: var(--galica); color: #fff; padding: 2rem 1.25rem 1.5rem; }
+  header h1 { margin: 0 0 .4rem; font-size: clamp(1.7rem, 5vw, 2.6rem); line-height: 1.1; font-weight: 800; letter-spacing: -.02em; }
+  header p { margin: 0; max-width: 40rem; }
+  header, main, footer { padding-left: max(1.25rem, calc((100vw - 52rem) / 2)); padding-right: max(1.25rem, calc((100vw - 52rem) / 2)); }
+  main { padding-top: 1.5rem; padding-bottom: 1rem; }
+  section { padding: 1.5rem 0; border-bottom: 2px solid var(--crta); }
+  h2 { margin: 0 0 1rem; font-size: 1.35rem; font-weight: 800; }
+  h3 { margin: 1.4rem 0 .6rem; font-size: 1.1rem; font-weight: 800; }
+  label { display: block; font-weight: 600; font-size: .95rem; margin-bottom: .3rem; }
+  select, input[type=number] {
+    width: 100%; font: inherit; padding: .65rem .7rem; background: #fff;
+    border: 2px solid var(--crta); border-radius: 6px; color: inherit;
+  }
+  :focus-visible { outline: 3px solid var(--grozd); outline-offset: 2px; }
+  .mreza { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+  .namig { font-size: .9rem; color: #55605c; margin: .4rem 0 0; }
+
+  /* povezave na uradne vire */
+  .povezave { display: flex; flex-wrap: wrap; gap: .6rem; margin: 0 0 1.3rem; padding: 0; list-style: none; }
+  .povezave a {
+    display: block; padding: .55rem .9rem; background: #fff; color: var(--galica); font-weight: 700;
+    border: 2px solid var(--galica); border-radius: 6px; text-decoration: none; font-size: .95rem;
+  }
+  .povezave a:hover { background: var(--galica-t); }
+
+  /* izbirnik razvojne faze: stolpec raste z listno steno */
+  .faze { display: flex; gap: .4rem; overflow-x: auto; padding: 0 0 .5rem; margin: 0 0 .3rem; border: 0; }
+  .faze legend { font-weight: 600; font-size: .95rem; padding: 0; margin-bottom: .5rem; }
+  .faza { flex: 1 0 5.2rem; position: relative; }
+  .faza input { position: absolute; opacity: 0; inset: 0; }
+  .faza span {
+    display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+    height: 6.5rem; padding: .4rem .2rem; text-align: center; font-size: .82rem; line-height: 1.2;
+    background: #fff; border: 2px solid var(--crta); border-radius: 6px; cursor: pointer;
+  }
+  .faza i { display: block; width: 60%; background: var(--list); border-radius: 3px 3px 0 0; margin-bottom: .35rem; opacity: .45; }
+  .faza input:checked + span { border-color: var(--galica); background: var(--galica-t); font-weight: 700; }
+  .faza input:checked + span i { opacity: 1; }
+  .faza input:focus-visible + span { outline: 3px solid var(--grozd); outline-offset: 2px; }
+
+  .drsnik { overflow-x: auto; background: #fff; border-left: 6px solid var(--list); border-radius: 0 6px 6px 0; }
+  .drsnik table { min-width: 42rem; }
+  .drsnik th, .drsnik td { padding: .6rem .7rem; }
+
+  #seznam { list-style: none; margin: 0; padding: 0; }
+  #seznam li { display: grid; grid-template-columns: 4.2rem 1fr auto; gap: .8rem; align-items: center; padding: .7rem 0; border-top: 1px solid var(--crta); }
+  #seznam li:first-child { border-top: 0; }
+  .frac { background: var(--galica); color: #fff; font-weight: 700; text-align: center; padding: .35rem .2rem; border-radius: 4px; font-size: .9rem; }
+  .ista .frac { background: var(--grozd); }
+  .ime { font-weight: 700; }
+  .opis { font-size: .88rem; color: #55605c; }
+  .ista .opis { color: var(--grozd); font-weight: 600; }
+  button {
+    font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; padding: .5rem .8rem;
+    background: #fff; color: var(--galica); border: 2px solid var(--galica); border-radius: 6px;
+  }
+  button:hover { background: var(--galica-t); }
+
+  .izid { margin-top: 1.2rem; background: #fff; border-left: 6px solid var(--galica); padding: 1rem 1.1rem; border-radius: 0 6px 6px 0; }
+  .izid dl { display: grid; grid-template-columns: 1fr auto; gap: .45rem 1rem; margin: 0; }
+  .izid dt { color: #55605c; }
+  .izid dd { margin: 0; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th, td { text-align: left; padding: .5rem .4rem; border-bottom: 1px solid var(--crta); vertical-align: top; }
+  th { font-weight: 700; }
+  footer { padding-top: 1.2rem; padding-bottom: 2.5rem; font-size: .9rem; }
+  footer strong { color: var(--grozd); }
+  @media (max-width: 30rem) { #seznam li { grid-template-columns: 3.6rem 1fr; } #seznam button { grid-column: 2; justify-self: start; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Škropilni svetovalec za vinsko trto</h1>
+  <p>Izberite razvojno fazo in bolezen. Dobite škropilni program, primerne aktivne snovi, okvirno porabo vode in količino sredstva na rezervoar.</p>
+</header>
+
+<main>
+  <section>
+    <h2>Kaj škropite</h2>
+
+    <ul class="povezave">
+      <li><a href="https://spletni2.furs.gov.si/FFS/REGSR/index.htm" target="_blank" rel="noopener">FITO-INFO: register sredstev</a></li>
+      <li><a href="http://www.fito-info.si" target="_blank" rel="noopener">FITO-INFO: portal in obvestila</a></li>
+      <li><a href="https://vreme.arso.gov.si/" target="_blank" rel="noopener">Vremenska napoved za več dni (ARSO)</a></li>
+    </ul>
+    <h3>Koledar razvoja trte in bolezni</h3>
+    <div style="overflow-x:auto; background:#fff; border-radius:6px; padding:.6rem">
+      <svg id="koledar" viewBox="0 0 720 292" style="min-width:640px; display:block; font-family:inherit"
+           role="img" aria-label="Koledar razvojnih faz trte in nevarnosti bolezni po mesecih"></svg>
+    </div>
+    <p class="namig" id="koledarOpis" style="font-weight:600; color:inherit"></p>
+    <p class="namig" style="margin-bottom:1.2rem">Višina krivulje pomeni nevarnost okužbe. Termini so okvirni in se razlikujejo po legi, sorti in letu. Črtkana črta označuje današnji dan.</p>
+
+    <script>
+    (function () {
+      const MESECI = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'avg', 'sep', 'okt', 'nov', 'dec'];
+      /* a in b: začetek in konec faze v mesecih (0 = 1. januar, 12 = 31. december) */
+      const FAZE_K = [
+        { id: 1, a: 3.3, b: 4.0, ime: 'Brstenje',          cas: 'sredina do konca aprila' },
+        { id: 2, a: 4.0, b: 4.8, ime: 'Rast mladik',       cas: 'maj' },
+        { id: 3, a: 4.8, b: 5.2, ime: 'Pred cvetenjem',    cas: 'konec maja do začetka junija' },
+        { id: 4, a: 5.2, b: 5.6, ime: 'Cvetenje',          cas: 'prva polovica junija' },
+        { id: 5, a: 5.6, b: 6.5, ime: 'Po cvetenju',       cas: 'druga polovica junija do sredine julija' },
+        { id: 6, a: 6.5, b: 7.2, ime: 'Zapiranje grozdov', cas: 'druga polovica julija' },
+        { id: 7, a: 7.2, b: 8.7, ime: 'Zorenje',           cas: 'avgust do sredine septembra' }
+      ];
+      /* t: točke krivulje [mesec, nevarnost od 0 do 1] */
+      const BOLEZNI_K = [
+        { ime: 'Črna pegavost', barva: '#8a7440', t: [[3.2, 0], [3.6, 1], [4.3, .8], [5.0, .2], [5.5, 0]] },
+        { ime: 'Peronospora',   barva: '#1b7a8c', t: [[4.0, 0], [4.6, .4], [5.2, 1], [6.2, 1], [7.0, .6], [8.0, .3], [8.8, 0]] },
+        { ime: 'Oidij',         barva: '#7d86a8', t: [[3.8, 0], [4.5, .3], [5.3, .9], [6.3, 1], [7.0, .6], [7.6, .2], [8.2, 0]] },
+        { ime: 'Siva plesen',   barva: '#5a2444', t: [[5.3, 0], [5.6, .4], [6.0, .15], [6.6, .5], [7.5, .8], [8.5, 1], [9.3, .6], [9.7, 0]] }
+      ];
+      const X = m => m * 60;
+      const vrh = 30, visFaze = 28, zacetekB = 76, visVrste = 50, visKrivulje = 34;
+      let s = '';
+
+      // meseci
+      MESECI.forEach((m, i) => {
+        s += `<line x1="${X(i)}" y1="22" x2="${X(i)}" y2="276" stroke="#c5d2ce" stroke-width="1"/>
+              <text x="${X(i) + 30}" y="15" text-anchor="middle" font-size="13" font-weight="700" fill="#2b2a26">${m}</text>`;
+      });
+
+      // trak: mirovanje, faze, trgatev
+      s += `<rect x="0" y="${vrh}" width="720" height="${visFaze}" fill="#e3e9e6"/>
+            <text x="100" y="${vrh + 19}" text-anchor="middle" font-size="12" fill="#55605c">mirovanje</text>
+            <text x="655" y="${vrh + 19}" text-anchor="middle" font-size="12" fill="#55605c">mirovanje</text>
+            <rect x="${X(8.7)}" y="${vrh}" width="${X(1.1)}" height="${visFaze}" fill="#d9c56a"/>
+            <text x="${X(9.25)}" y="${vrh + 19}" text-anchor="middle" font-size="12" fill="#2b2a26">trgatev</text>`;
+      FAZE_K.forEach((f, i) => {
+        s += `<g class="kf" data-id="${f.id}" style="cursor:pointer">
+                <title>${f.id}. ${f.ime}: ${f.cas}</title>
+                <rect x="${X(f.a)}" y="${vrh}" width="${X(f.b - f.a)}" height="${visFaze}" fill="#5e7f2e" fill-opacity="${.4 + i * .1}" stroke="#fff" stroke-width="1"/>
+                <text x="${X((f.a + f.b) / 2)}" y="${vrh + 19}" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">${f.id}</text>
+              </g>`;
+      });
+
+      // krivulje bolezni
+      BOLEZNI_K.forEach((b, i) => {
+        const dno = zacetekB + i * visVrste + visVrste - 8;
+        const tocke = b.t.map(([m, r]) => `${X(m)},${dno - r * visKrivulje}`).join(' ');
+        s += `<line x1="0" y1="${dno}" x2="720" y2="${dno}" stroke="#c5d2ce" stroke-width="1"/>
+              <polygon points="${tocke}" fill="${b.barva}" fill-opacity=".85"/>
+              <text x="6" y="${dno - 8}" font-size="13" font-weight="700" fill="${b.barva}">${b.ime}</text>`;
+      });
+
+      // označba izbrane faze in današnji dan
+      s += `<rect id="kOznaka" y="24" height="252" fill="#1b7a8c" fill-opacity=".14" stroke="#1b7a8c" stroke-width="1.5" pointer-events="none"/>`;
+      const d = new Date(), danes = d.getMonth() + (d.getDate() - 1) / 31;
+      s += `<line x1="${X(danes)}" y1="24" x2="${X(danes)}" y2="276" stroke="#5a2444" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <text x="${Math.min(Math.max(X(danes), 18), 702)}" y="289" text-anchor="middle" font-size="11" fill="#5a2444">danes</text>`;
+
+      const svg = document.getElementById('koledar');
+      svg.innerHTML = s;
+
+      // nevarnost bolezni v izbranem mesecu (linearna interpolacija med točkami)
+      function nevarnost(t, m) {
+        for (let i = 1; i < t.length; i++) {
+          if (m >= t[i - 1][0] && m <= t[i][0]) {
+            const delez = (m - t[i - 1][0]) / (t[i][0] - t[i - 1][0]);
+            return t[i - 1][1] + delez * (t[i][1] - t[i - 1][1]);
+          }
+        }
+        return 0;
+      }
+
+      function oznaci() {
+        const izbran = document.querySelector('input[name=faza]:checked');
+        if (!izbran) return;
+        const f = FAZE_K.find(x => x.id === +izbran.value);
+        const o = document.getElementById('kOznaka');
+        o.setAttribute('x', X(f.a));
+        o.setAttribute('width', X(f.b - f.a));
+        const nevarne = BOLEZNI_K.filter(b => nevarnost(b.t, (f.a + f.b) / 2) >= .3).map(b => b.ime.toLowerCase());
+        document.getElementById('koledarOpis').textContent =
+          `${f.id}. ${f.ime}: ${f.cas}. ` + (nevarne.length ? `Nevarnost: ${nevarne.join(', ')}.` : 'Nevarnost bolezni je majhna.');
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        // številke na okencih faz, da se ujemajo s koledarjem
+        document.querySelectorAll('.faza').forEach(l => {
+          const id = l.querySelector('input').value;
+          l.querySelector('span').append(document.createElement('br'), id + '.');
+        });
+        // klik na fazo v koledarju izbere okence spodaj
+        svg.querySelectorAll('.kf').forEach(g => g.addEventListener('click', () => {
+          const r = document.querySelector(`input[name=faza][value="${g.dataset.id}"]`);
+          r.checked = true;
+          r.dispatchEvent(new Event('change', { bubbles: true }));
+        }));
+        document.getElementById('faze').addEventListener('change', oznaci);
+        oznaci();
+      });
+    })();
+    </script>
+    <fieldset class="faze" id="faze"><legend>Razvojna faza trte (kliknite okence)</legend></fieldset>
+    <p class="namig" id="fazaOpis"></p>
+
+    <h3>Škropilni program</h3>
+    <div class="drsnik">
+      <table>
+        <thead>
+          <tr><th>Varstveni ukrep</th><th>Čas</th><th>Bolezni in škodljivci</th><th>Priporočena sredstva</th><th>Opomba</th></tr>
+        </thead>
+        <tbody id="program"></tbody>
+      </table>
+    </div>
+
+    <div class="mreza" style="margin-top:1.4rem">
+      <div><label for="bolezen">Bolezen</label><select id="bolezen"></select></div>
+      <div><label for="pridelava">Način pridelave</label>
+        <select id="pridelava"><option value="int">Integrirana</option><option value="eko">Ekološka</option></select></div>
+      <div><label for="zadnja">Skupina FRAC pri zadnjem škropljenju</label><select id="zadnja"></select></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Primerne aktivne snovi</h2>
+    <ul id="seznam"></ul>
+    <p class="namig">Številka na levi je skupina FRAC. Menjavajte skupine, da preprečite odpornost. Sredstvo s to aktivno snovjo poiščite v registru FITO-INFO.</p>
+  </section>
+
+  <section>
+    <h2>Voda in količina sredstva</h2>
+    <div class="mreza">
+      <div><label for="pov">Površina vinograda (ha)</label><input type="number" id="pov" min="0" step="0.01" value="0.5"></div>
+      <div><label for="voda">Poraba vode (l/ha)</label><input type="number" id="voda" min="0" step="10"><p class="namig" id="vodaNamig"></p></div>
+      <div><label for="rez">Rezervoar škropilnice (l)</label><input type="number" id="rez" min="0" step="10" value="200"></div>
+      <div><label for="odm">Odmerek z etikete (na ha)</label><input type="number" id="odm" min="0" step="0.01" placeholder="npr. 2"></div>
+      <div><label for="enota">Enota odmerka</label>
+        <select id="enota"><option>l</option><option>kg</option><option>ml</option><option>g</option></select></div>
+      <div><label for="vrsta">Medvrstna razdalja (m)</label><input type="number" id="vrsta" min="0" step="0.1" value="2.4"></div>
+      <div><label for="visina">Višina listne stene (m)</label><input type="number" id="visina" min="0" step="0.1" value="1.2"></div>
+    </div>
+    <div class="izid" id="izid"></div>
+  </section>
+
+  <section>
+    <h2>Dnevnik škropljenj</h2>
+    <div id="dnevnik"></div>
+  </section>
+</main>
+
+<footer>
+  <p><strong>Podatki so okvirni in služijo kot primer.</strong> Registracije sredstev se spreminjajo. Pred uporabo preverite register FITO-INFO in upoštevajte etiketo sredstva: odmerek, karenco, največje število škropljenj in dovoljene razvojne faze. Roke škropljenj uskladite z obvestili opazovalno-napovedovalne službe.</p>
+</footer>
+
+<script>
+const FAZE = [
+  { id: 1, kratko: 'Brstenje',    ime: 'Brstenje do 3 listov (BBCH 07–13)',        voda: [200, 300],  v: 12 },
+  { id: 2, kratko: 'Rast mladik', ime: 'Rast mladik (BBCH 14–53)',                 voda: [300, 400],  v: 25 },
+  { id: 3, kratko: 'Pred cvetenjem', ime: 'Pred cvetenjem (BBCH 55–59)',           voda: [400, 600],  v: 40 },
+  { id: 4, kratko: 'Cvetenje',    ime: 'Cvetenje (BBCH 61–69)',                    voda: [500, 700],  v: 55 },
+  { id: 5, kratko: 'Po cvetenju', ime: 'Po cvetenju, razvoj jagod (BBCH 71–77)',   voda: [600, 800],  v: 70 },
+  { id: 6, kratko: 'Zapiranje grozdov', ime: 'Zapiranje grozdov (BBCH 77–79)',     voda: [800, 1000], v: 85 },
+  { id: 7, kratko: 'Zorenje',     ime: 'Začetek zorenja (BBCH 81–85)',             voda: [600, 1000], v: 85 }
+];
+
+/* Škropilni program: ena vrstica za vsako razvojno fazo (ključ je id faze). Besedila so primer, popravite jih po potrebi. */
+const PROGRAM = {
+  1: { ukrep: '1. škropljenje',
+       cas: 'Brstenje do 3 listov, mladike dolge 5–10 cm',
+       cilj: 'Črna pegavost, zgodnje okužbe z oidijem, pršice šiškarice (erinoza, akarinoza)',
+       sredstva: 'Močljivo žveplo; proti črni pegavosti folpet ali ditianon, v ekološki pridelavi bakrov pripravek',
+       opomba: 'Škropimo pred napovedanim dežjem. Najpomembnejše tam, kjer se je črna pegavost pojavila prejšnje leto. Žveplo slabše deluje v hladnem vremenu.' },
+  2: { ukrep: '2. škropljenje',
+       cas: 'Rast mladik, mladike dolge 20–40 cm',
+       cilj: 'Peronospora (prve okužbe), oidij, črna pegavost',
+       sredstva: 'Kontaktno sredstvo proti peronospori (folpet, ditianon ali baker) in žveplo, meptildinokap ali spiroksamin proti oidiju',
+       opomba: 'Varstvo pred peronosporo začnemo po obvestilu opazovalno-napovedovalne službe. Razmik med škropljenji 8–12 dni, v deževnem vremenu krajši.' },
+  3: { ukrep: '3. škropljenje',
+       cas: 'Tik pred cvetenjem, kabrniki ločeni',
+       cilj: 'Peronospora, oidij; po potrebi grozdni sukači (1. rod)',
+       sredstva: 'Sistemično ali lokalno sistemično sredstvo proti peronospori (fosfonati, mandipropamid, fluopikolid, oksatiapiprolin) skupaj s kontaktnim; proti oidiju penkonazol, tebukonazol ali metrafenon',
+       opomba: 'Začne se najbolj občutljivo obdobje. Menjavamo skupine FRAC. Bakrovih pripravkov tik pred cvetenjem in med njim ne uporabljamo.' },
+  4: { ukrep: '4. škropljenje',
+       cas: 'Cvetenje do konca cvetenja',
+       cilj: 'Peronospora, oidij, siva plesen (ob koncu cvetenja)',
+       sredstva: 'Sistemično sredstvo proti peronospori; proti oidiju fluksapiroksad, ciflufenamid ali prokinazid; pri občutljivih sortah ob koncu cvetenja fenheksamid ali ciprodinil + fludioksonil',
+       opomba: 'Ne uporabljamo sredstev, nevarnih čebelam. Cvetočo podrast prej pokosimo. Škropimo zvečer ali zgodaj zjutraj.' },
+  5: { ukrep: '5. škropljenje',
+       cas: 'Po cvetenju, jagode velikosti zrna prosa do graha',
+       cilj: 'Peronospora, oidij (grozdiči so zelo občutljivi), ameriški škržatek, grozdni sukači (2. rod)',
+       sredstva: 'Proti peronospori ametoktradin, zoksamid, ciazofamid ali mandipropamid s folpetom; proti oidiju metrafenon, triazol ali žveplo; insekticid proti škržatku po obvestilu službe',
+       opomba: 'Insekticid uporabimo šele, ko trta povsem odcveti, cvetočo podrast prej pokosimo. Na območjih zlate trsne rumenice je zatiranje škržatka obvezno.' },
+  6: { ukrep: '6. škropljenje',
+       cas: 'Zapiranje grozdov',
+       cilj: 'Siva plesen, peronospora, oidij',
+       sredstva: 'Botriticid (fenheksamid, pirimetanil, boskalid ali ciprodinil + fludioksonil); proti peronospori baker, folpet ali zoksamid; proti oidiju žveplo ali metrafenon',
+       opomba: 'Zadnja priložnost, da sredstvo doseže notranjost grozda. Škropivo usmerimo v območje grozdja, ki ga prej razlistamo.' },
+  7: { ukrep: '7. škropljenje',
+       cas: 'Začetek zorenja (mehčanje in barvanje jagod)',
+       cilj: 'Siva plesen, pozna peronospora na vršičkih',
+       sredstva: 'Bakrov pripravek; botriticid s kratko karenco; kalijev hidrogenkarbonat',
+       opomba: 'Strogo upoštevamo karenco do trgatve. Pri zgodnjih sortah to škropljenje pogosto odpade.' }
+};
+
+const BOLEZNI = { pero: 'Peronospora', oidij: 'Oidij (pepelovka)', botr: 'Siva plesen (botritis)', pega: 'Črna pegavost' };
+
+/* Primeri aktivnih snovi. f = skupina FRAC, b = bolezni, faze = okvirno primerne faze.
+   Seznam dopolnite in uskladite z veljavnim registrom FITO-INFO. */
+const SNOVI = [
+  { n: 'Bakrovi pripravki',  f: 'M01', b: ['pero', 'pega'],  faze: [1,2,5,6,7],     eko: true,  t: 'kontaktno' },
+  { n: 'Žveplo',             f: 'M02', b: ['oidij', 'pega'], faze: [1,2,3,4,5,6,7], eko: true,  t: 'kontaktno' },
+  { n: 'Folpet',             f: 'M04', b: ['pero', 'pega'],  faze: [1,2,3,4,5,6],   eko: false, t: 'kontaktno' },
+  { n: 'Ditianon',           f: 'M09', b: ['pero', 'pega'],  faze: [1,2,3,4,5],     eko: false, t: 'kontaktno' },
+  { n: 'Kalijevi fosfonati', f: 'P07', b: ['pero'],          faze: [2,3,4,5],       eko: false, t: 'sistemično' },
+  { n: 'Fosetil-Al',         f: 'P07', b: ['pero'],          faze: [2,3,4,5],       eko: false, t: 'sistemično' },
+  { n: 'Cimoksanil',         f: '27',  b: ['pero'],          faze: [2,3,4,5,6],     eko: false, t: 'lokalno sistemično' },
+  { n: 'Mandipropamid',      f: '40',  b: ['pero'],          faze: [3,4,5,6],       eko: false, t: 'lokalno sistemično' },
+  { n: 'Ametoktradin',       f: '45',  b: ['pero'],          faze: [3,4,5,6],       eko: false, t: 'kontaktno' },
+  { n: 'Zoksamid',           f: '22',  b: ['pero'],          faze: [3,4,5,6],       eko: false, t: 'kontaktno' },
+  { n: 'Fluopikolid',        f: '43',  b: ['pero'],          faze: [3,4,5,6],       eko: false, t: 'lokalno sistemično' },
+  { n: 'Oksatiapiprolin',    f: '49',  b: ['pero'],          faze: [3,4,5],         eko: false, t: 'sistemično' },
+  { n: 'Ciazofamid',         f: '21',  b: ['pero'],          faze: [3,4,5,6],       eko: false, t: 'kontaktno' },
+  { n: 'Amisulbrom',         f: '21',  b: ['pero'],          faze: [3,4,5,6],       eko: false, t: 'kontaktno' },
+  { n: 'Penkonazol',         f: '3',   b: ['oidij'],         faze: [2,3,4,5,6],     eko: false, t: 'sistemično' },
+  { n: 'Tebukonazol',        f: '3',   b: ['oidij'],         faze: [2,3,4,5,6],     eko: false, t: 'sistemično' },
+  { n: 'Difenokonazol',      f: '3',   b: ['oidij'],         faze: [2,3,4,5,6],     eko: false, t: 'sistemično' },
+  { n: 'Tetrakonazol',       f: '3',   b: ['oidij'],         faze: [2,3,4,5,6],     eko: false, t: 'sistemično' },
+  { n: 'Spiroksamin',        f: '5',   b: ['oidij'],         faze: [2,3,4,5],       eko: false, t: 'sistemično' },
+  { n: 'Fluksapiroksad',     f: '7',   b: ['oidij'],         faze: [3,4,5,6],       eko: false, t: 'sistemično' },
+  { n: 'Prokinazid',         f: '13',  b: ['oidij'],         faze: [2,3,4,5],       eko: false, t: 'kontaktno' },
+  { n: 'Meptildinokap',      f: '29',  b: ['oidij'],         faze: [2,3,4,5,6],     eko: false, t: 'kontaktno' },
+  { n: 'Metrafenon',         f: '50',  b: ['oidij'],         faze: [3,4,5,6],       eko: false, t: 'kontaktno' },
+  { n: 'Piriofenon',         f: '50',  b: ['oidij'],         faze: [3,4,5,6],       eko: false, t: 'kontaktno' },
+  { n: 'Ciflufenamid',       f: 'U06', b: ['oidij'],         faze: [3,4,5,6],       eko: false, t: 'kontaktno' },
+  { n: 'Kalijev hidrogenkarbonat', f: 'NC', b: ['oidij', 'botr'], faze: [2,3,4,5,6,7], eko: true, t: 'kontaktno' },
+  { n: 'Fenheksamid',        f: '17',  b: ['botr'],          faze: [4,6,7],         eko: false, t: 'kontaktno' },
+  { n: 'Fenpirazamin',       f: '17',  b: ['botr'],          faze: [4,6,7],         eko: false, t: 'kontaktno' },
+  { n: 'Ciprodinil + fludioksonil', f: '9+12', b: ['botr'],  faze: [4,6,7],         eko: false, t: 'sistemično + kontaktno' },
+  { n: 'Pirimetanil',        f: '9',   b: ['botr'],          faze: [4,6,7],         eko: false, t: 'sistemično' },
+  { n: 'Boskalid',           f: '7',   b: ['botr'],          faze: [4,6],           eko: false, t: 'sistemično' }
+];
+
+const $ = id => document.getElementById(id);
+const st = n => n.toLocaleString('sl-SI', { maximumFractionDigits: 2 });
+const KLJUC = 'trta-dnevnik';
+let dnevnik = [];
+try { dnevnik = JSON.parse(localStorage.getItem(KLJUC)) || []; } catch (e) { dnevnik = []; }
+function shrani() { try { localStorage.setItem(KLJUC, JSON.stringify(dnevnik)); } catch (e) {} }
+
+/* --- obrazec --- */
+FAZE.forEach((f, i) => {
+  const l = document.createElement('label');
+  l.className = 'faza';
+  l.innerHTML = `<input type="radio" name="faza" value="${f.id}" ${i === 0 ? 'checked' : ''}>
+    <span><i style="height:${f.v}%"></i>${f.kratko}</span>`;
+  $('faze').appendChild(l);
+});
+Object.entries(BOLEZNI).forEach(([k, v]) => $('bolezen').add(new Option(v, k)));
+
+const faza = () => FAZE.find(f => f.id === +document.querySelector('input[name=faza]:checked').value);
+const veckratna = f => f.startsWith('M') || f === 'NC';   // večmestno delovanje, majhno tveganje odpornosti
+
+/* --- škropilni program za izbrano fazo --- */
+function prikaziProgram() {
+  const f = faza(), p = PROGRAM[f.id];
+  $('fazaOpis').textContent = f.ime;
+  $('program').innerHTML = `<tr><td><strong>${p.ukrep}</strong></td><td>${p.cas}</td><td>${p.cilj}</td>
+    <td>${p.sredstva}</td><td>${p.opomba} Poraba vode ${f.voda[0]}–${f.voda[1]} l/ha.</td></tr>`;
+}
+
+function napolniZadnjo() {
+  const b = $('bolezen').value;
+  const skupine = [...new Set(SNOVI.filter(s => s.b.includes(b)).flatMap(s => s.f.split('+')))];
+  const zadnji = dnevnik.find(z => z.b === b);
+  $('zadnja').innerHTML = '';
+  $('zadnja').add(new Option('Ni podatka', ''));
+  skupine.forEach(s => $('zadnja').add(new Option(s, s)));
+  if (zadnji) $('zadnja').value = zadnji.f.split('+')[0];
+}
+
+function prikaziSeznam() {
+  const f = faza(), b = $('bolezen').value, eko = $('pridelava').value === 'eko', zadnja = $('zadnja').value;
+  const ista = s => zadnja && !veckratna(s.f) && s.f.split('+').includes(zadnja);
+  const izbor = SNOVI
+    .filter(s => s.b.includes(b) && s.faze.includes(f.id) && (!eko || s.eko))
+    .sort((x, y) => ista(x) - ista(y));
+  const ul = $('seznam');
+  ul.innerHTML = '';
+  if (!izbor.length) {
+    ul.innerHTML = `<li style="display:block">Za to kombinacijo ni primerne snovi na seznamu. V tej fazi škropljenje proti tej bolezni običajno ni potrebno. Izberite drugo fazo ali bolezen.</li>`;
+    return;
+  }
+  izbor.forEach(s => {
+    const li = document.createElement('li');
+    if (ista(s)) li.className = 'ista';
+    li.innerHTML = `<div class="frac">${s.f}</div>
+      <div><div class="ime">${s.n}</div>
+      <div class="opis">${ista(s) ? 'Ista skupina kot zadnjič. Raje izberite drugo.' : s.t + (s.eko ? ', dovoljeno v ekološki pridelavi' : '')}</div></div>`;
+    const g = document.createElement('button');
+    g.textContent = 'Zabeleži škropljenje';
+    g.onclick = () => {
+      dnevnik.unshift({ d: new Date().toISOString().slice(0, 10), faza: f.kratko, b, n: s.n, f: s.f });
+      shrani(); prikaziDnevnik(); napolniZadnjo(); prikaziSeznam();
+    };
+    li.appendChild(g);
+    ul.appendChild(li);
+  });
+}
+
+/* --- kalkulator --- */
+function nastaviVodo() {
+  const [a, b] = faza().voda;
+  $('voda').value = (a + b) / 2;
+  $('vodaNamig').textContent = `Okvirno za to fazo: ${a}–${b} l/ha`;
+}
+
+function izracun() {
+  const pov = +$('pov').value, voda = +$('voda').value, rez = +$('rez').value;
+  const odm = +$('odm').value, en = $('enota').value, r = +$('vrsta').value, h = +$('visina').value;
+  if (!(pov > 0 && voda > 0 && rez > 0)) {
+    $('izid').textContent = 'Vnesite površino, porabo vode in velikost rezervoarja.';
+    return;
+  }
+  const skupaj = pov * voda;
+  const polni = Math.floor(skupaj / rez + 1e-9);
+  const ostanek = Math.max(0, skupaj - polni * rez);
+  let v = `<dt>Skupna količina vode</dt><dd>${st(skupaj)} l</dd>
+           <dt>Število rezervoarjev</dt><dd>${polni} polnih${ostanek > 0.5 ? ' + ' + st(ostanek) + ' l' : ''}</dd>`;
+  if (odm > 0) {
+    v += `<dt>Skupna količina sredstva</dt><dd>${st(odm * pov)} ${en}</dd>`;
+    if (polni > 0) v += `<dt>Sredstvo na poln rezervoar (${st(rez)} l)</dt><dd>${st(odm * rez / voda)} ${en}</dd>`;
+    if (ostanek > 0.5) v += `<dt>Sredstvo za zadnjih ${st(ostanek)} l</dt><dd>${st(odm * ostanek / voda)} ${en}</dd>`;
+  } else {
+    v += `<dt>Količina sredstva</dt><dd>vnesite odmerek z etikete</dd>`;
+  }
+  if (r > 0 && h > 0) v += `<dt>Površina listne stene (LWA)</dt><dd>${st(2 * h * 10000 / r)} m²/ha</dd>`;
+  $('izid').innerHTML = `<dl>${v}</dl>`;
+}
+
+/* --- dnevnik --- */
+function prikaziDnevnik() {
+  if (!dnevnik.length) {
+    $('dnevnik').innerHTML = '<p class="namig">Dnevnik je prazen. Pri izbrani snovi pritisnite »Zabeleži škropljenje«.</p>';
+    return;
+  }
+  $('dnevnik').innerHTML = `<table><thead><tr><th>Datum</th><th>Faza</th><th>Bolezen</th><th>Aktivna snov</th><th>FRAC</th><th></th></tr></thead><tbody>` +
+    dnevnik.map((z, i) => `<tr><td>${z.d.split('-').reverse().join('. ')}</td><td>${z.faza}</td><td>${BOLEZNI[z.b]}</td><td>${z.n}</td><td>${z.f}</td>
+      <td><button data-i="${i}">Odstrani</button></td></tr>`).join('') + `</tbody></table>`;
+}
+$('dnevnik').addEventListener('click', e => {
+  if (e.target.dataset.i === undefined) return;
+  dnevnik.splice(+e.target.dataset.i, 1);
+  shrani(); prikaziDnevnik(); napolniZadnjo(); prikaziSeznam();
+});
+
+/* --- povezave med deli strani --- */
+$('faze').addEventListener('change', () => { prikaziProgram(); prikaziSeznam(); nastaviVodo(); izracun(); });
+$('bolezen').addEventListener('change', () => { napolniZadnjo(); prikaziSeznam(); });
+$('pridelava').addEventListener('change', prikaziSeznam);
+$('zadnja').addEventListener('change', prikaziSeznam);
+['pov', 'voda', 'rez', 'odm', 'enota', 'vrsta', 'visina'].forEach(id => $(id).addEventListener('input', izracun));
+
+prikaziProgram(); napolniZadnjo(); prikaziSeznam(); nastaviVodo(); prikaziDnevnik(); izracun();
+</script>
+</body>
+</html>
