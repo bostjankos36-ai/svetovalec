@@ -528,7 +528,7 @@ function naslednje() {
 
 function prikaziDnevnik() {
   if (!dnevnik.length) {
-    $('dnevnik').innerHTML = '<p class="namig">Dnevnik je prazen. Pri izbrani snovi pritisnite »Zabeleži škropljenje«.</p>';
+    $('dnevnik').innerHTML = '<p class="namig">Dnevnik je prazen. Pri izbrani snovi pritisnite »Zabeleži škropljenje«. Nato se tu pokaže priporočen datum naslednjega škropljenja.</p>';
     return;
   }
   $('dnevnik').innerHTML = `<div class="izid" style="margin:0 0 1rem"><h3 style="margin-top:0">Priporočeno naslednje škropljenje</h3>
