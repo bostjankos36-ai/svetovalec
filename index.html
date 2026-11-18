@@ -113,16 +113,10 @@
            role="img" aria-label="Koledar razvojnih faz trte in nevarnosti bolezni po mesecih"></svg>
     </div>
     <p class="namig" id="koledarOpis" style="font-weight:600; color:inherit"></p>
-    <p class="namig" style="margin-bottom:1.2rem">Višina krivulje pomeni nevarnost okužbe. Termini so okvirni in se razlikujejo po legi, sorti in letu. Črtkana črta označuje današnji dan.</p>
+    <p class="namig">Višina krivulje pomeni nevarnost okužbe. Termini so okvirni in se razlikujejo po legi, sorti in letu. Črtkana črta označuje današnji dan. <strong>Kliknite mesec ali fazo v koledarju za opravila.</strong></p>
 
-    <h3>Opravila in gnojenje po mesecih</h3>
-    <div class="drsnik">
-      <table style="min-width:0">
-        <thead><tr><th>Mesec</th><th>Opravila in gnojenje (puščica → količina za vašo površino)</th></tr></thead>
-        <tbody id="opravila"></tbody>
-      </table>
-    </div>
-    <p class="namig" style="margin-bottom:1.2rem">Gnojite po analizi tal (vsaj vsakih 5 let). Na leto največ 60 kg dušika na ha, naenkrat največ 50 kg, vključno z organskimi gnojili (vir: Tehnološka navodila za integrirano pridelavo grozdja, MKGP). Količine so za dobro založena tla (razred C) in pridelek 5–10 t/ha. Vsebnost hranil preverite na embalaži gnojila.</p>
+    <div class="izid" id="opravila" style="margin-top:.6rem"></div>
+    <p class="namig" style="margin-bottom:1.2rem">Puščica → pomeni količino za vašo površino.Gnojite po analizi tal (vsaj vsakih 5 let). Na leto največ 60 kg dušika na ha, naenkrat največ 50 kg, vključno z organskimi gnojili (vir: Tehnološka navodila za integrirano pridelavo grozdja, MKGP). Količine so za dobro založena tla (razred C) in pridelek 5–10 t/ha. Vsebnost hranil preverite na embalaži gnojila.</p>
 
     <script>
     (function () {
@@ -183,8 +177,20 @@
       s += `<line x1="${X(danes)}" y1="24" x2="${X(danes)}" y2="276" stroke="#5a2444" stroke-width="1.5" stroke-dasharray="4 3"/>
             <text x="${Math.min(Math.max(X(danes), 18), 702)}" y="289" text-anchor="middle" font-size="11" fill="#5a2444">danes</text>`;
 
+      // izbrani mesec za opravila in nevidna polja za klik na mesec (nad trakom faz in pod njim)
+      s += `<rect id="kMesec" y="22" width="60" height="254" fill="none" stroke="#5a2444" stroke-width="2" pointer-events="none"/>`;
+      MESECI.forEach((m, i) => {
+        s += `<rect class="km" data-m="${i}" x="${X(i)}" y="0" width="60" height="${vrh}" fill="transparent" style="cursor:pointer"/>
+              <rect class="km" data-m="${i}" x="${X(i)}" y="${vrh + visFaze}" width="60" height="${292 - vrh - visFaze}" fill="transparent" style="cursor:pointer"><title>${m}: opravila</title></rect>`;
+      });
+
       const svg = document.getElementById('koledar');
       svg.innerHTML = s;
+      const mesec = i => {
+        document.getElementById('kMesec').setAttribute('x', X(i));
+        document.dispatchEvent(new CustomEvent('mesec', { detail: i }));
+      };
+      document.getElementById('kMesec').setAttribute('x', X(new Date().getMonth()));
 
       // nevarnost bolezni v izbranem mesecu (linearna interpolacija med točkami)
       function nevarnost(t, m) {
@@ -221,7 +227,13 @@
           r.checked = true;
           r.dispatchEvent(new Event('change', { bubbles: true }));
         }));
+        svg.querySelectorAll('.km').forEach(r => r.addEventListener('click', () => mesec(+r.dataset.m)));
         document.getElementById('faze').addEventListener('change', oznaci);
+        // izbira faze pokaže opravila meseca, v katerem je sredina faze
+        document.getElementById('faze').addEventListener('change', () => {
+          const f = FAZE_K.find(x => x.id === +document.querySelector('input[name=faza]:checked').value);
+          mesec(Math.floor((f.a + f.b) / 2));
+        });
         oznaci();
       });
     })();
@@ -453,12 +465,14 @@ const OPRAVILA = [
   ['Mirovanje.', 'Prepovedano.']
 ];
 const MESEC = ['januar', 'februar', 'marec', 'april', 'maj', 'junij', 'julij', 'avgust', 'september', 'oktober', 'november', 'december'];
+let izbranMesec = new Date().getMonth();
 function prikaziOpravila() {
-  const pov = +$('pov').value, zdaj = new Date().getMonth();
-  $('opravila').innerHTML = OPRAVILA.map(([o, g, gn], i) => `<tr${i === zdaj ? ' style="background:var(--galica-t); font-weight:600"' : ''}>
-    <td>${MESEC[i]}</td><td>${o}<br><span style="color:var(--list); font-weight:700">Gnojenje:</span> ${g}${(gn || []).map(([ime, kg]) =>
-      `<br>• ${ime}: okoli ${kg} kg/ha${pov > 0 ? ` → <strong>${st(kg * pov)} kg</strong>` : ''}`).join('')}</td></tr>`).join('');
+  const pov = +$('pov').value, [o, g, gn] = OPRAVILA[izbranMesec];
+  $('opravila').innerHTML = `<h3 style="margin-top:0">Opravila: ${MESEC[izbranMesec]}${izbranMesec === new Date().getMonth() ? ' (ta mesec)' : ''}</h3>
+    <p style="margin:0 0 .5rem">${o}</p><p style="margin:0"><span style="color:var(--list); font-weight:700">Gnojenje:</span> ${g}${(gn || []).map(([ime, kg]) =>
+      `<br>• ${ime}: okoli ${kg} kg/ha${pov > 0 ? ` → <strong>${st(kg * pov)} kg</strong>` : ''}`).join('')}</p>`;
 }
+document.addEventListener('mesec', e => { izbranMesec = e.detail; prikaziOpravila(); });
 
 /* --- kalkulator --- */
 function nastaviVodo() {
