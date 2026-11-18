@@ -115,6 +115,15 @@
     <p class="namig" id="koledarOpis" style="font-weight:600; color:inherit"></p>
     <p class="namig" style="margin-bottom:1.2rem">Višina krivulje pomeni nevarnost okužbe. Termini so okvirni in se razlikujejo po legi, sorti in letu. Črtkana črta označuje današnji dan.</p>
 
+    <h3>Opravila in gnojenje po mesecih</h3>
+    <div class="drsnik">
+      <table style="min-width:0">
+        <thead><tr><th>Mesec</th><th>Opravila in gnojenje (puščica → količina za vašo površino)</th></tr></thead>
+        <tbody id="opravila"></tbody>
+      </table>
+    </div>
+    <p class="namig" style="margin-bottom:1.2rem">Gnojite po analizi tal (vsaj vsakih 5 let). Na leto največ 60 kg dušika na ha, naenkrat največ 50 kg, vključno z organskimi gnojili (vir: Tehnološka navodila za integrirano pridelavo grozdja, MKGP). Količine so za dobro založena tla (razred C) in pridelek 5–10 t/ha. Vsebnost hranil preverite na embalaži gnojila.</p>
+
     <script>
     (function () {
       const MESECI = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'avg', 'sep', 'okt', 'nov', 'dec'];
@@ -424,6 +433,33 @@ function prikaziSeznam() {
   });
 }
 
+/* --- opravila po mesecih --- */
+/* g: gnojila [ime, kg/ha]. KAN 27 % N, kalijev sulfat 50 % K2O, trojni superfosfat 46 % P2O5.
+   Količine po Tehnoloških navodilih za IP grozdja: dušik 70 % spomladi + 30 % do konca junija,
+   P in K za razred C: 30 kg P2O5 in 70 kg K2O na ha (obdelana tla; ozelenjena 35 in 80). */
+const PK = [['trojni superfosfat (30 kg P₂O₅)', 65], ['kalijev sulfat (70 kg K₂O)', 140]];
+const OPRAVILA = [
+  ['Zimska rez ob suhem vremenu brez hude zmrzali. Pregled in servis škropilnice.', 'Prepovedano do 15. 2.'],
+  ['Rez, popravilo opore in žic.', 'Po 15. 2. fosfor in kalij, če jih niste dali jeseni. Ne na zamrznjena, zasnežena ali razmočena tla.', PK],
+  ['Dokončanje rezi, privezovanje šparonov. Vzorec tal za analizo (vsakih 5 let).', 'Fosfor in kalij, če jih še niste dali.', PK],
+  ['Brstenje, prvo škropljenje. Pregled na pršice šiškarice.', 'Od druge polovice aprila do začetka maja 1. del dušika (okoli 30 kg N/ha), najbolje pred rahlim dežjem, ne v suši.', [['KAN', 110]]],
+  ['Odstranjevanje zalistnikov in odvečnih mladik, vezanje mladik, košnja medvrstnega prostora.', 'Če ste zamudili aprila, 1. del dušika do začetka maja.', [['KAN', 110]]],
+  ['Cvetenje: pred insekticidi pokosite cvetočo podrast. Vršičkanje, vezanje.', 'Do konca junija 2. del dušika (okoli 20 kg N/ha). Ob znakih pomanjkanja magnezija foliarno.', [['KAN', 75]]],
+  ['Razlistanje v območju grozdja, vršičkanje, redčenje grozdja.', 'V suši foliarno kalij.'],
+  ['Konec škropljenj proti peronospori okoli sredine avgusta. Spremljanje zrelosti, upoštevanje karenc.', '—'],
+  ['Trgatev. Pred trgatvijo strogo upoštevajte karence.', '—'],
+  ['Po trgatvi vrnite tropine in zmulčen les v vinograd. Rahljanje tal.', 'Najboljši čas za fosfor in kalij.', PK],
+  ['Pospravljanje, priprava na rez.', 'Fosfor in kalij do zamrznitve tal. Od 30. 11. je gnojenje prepovedano.', PK],
+  ['Mirovanje.', 'Prepovedano.']
+];
+const MESEC = ['januar', 'februar', 'marec', 'april', 'maj', 'junij', 'julij', 'avgust', 'september', 'oktober', 'november', 'december'];
+function prikaziOpravila() {
+  const pov = +$('pov').value, zdaj = new Date().getMonth();
+  $('opravila').innerHTML = OPRAVILA.map(([o, g, gn], i) => `<tr${i === zdaj ? ' style="background:var(--galica-t); font-weight:600"' : ''}>
+    <td>${MESEC[i]}</td><td>${o}<br><span style="color:var(--list); font-weight:700">Gnojenje:</span> ${g}${(gn || []).map(([ime, kg]) =>
+      `<br>• ${ime}: okoli ${kg} kg/ha${pov > 0 ? ` → <strong>${st(kg * pov)} kg</strong>` : ''}`).join('')}</td></tr>`).join('');
+}
+
 /* --- kalkulator --- */
 function nastaviVodo() {
   const [a, b] = faza().voda;
@@ -455,12 +491,35 @@ function izracun() {
 }
 
 /* --- dnevnik --- */
+/* Razmiki med škropljenji po Tehnoloških navodilih za integrirano pridelavo grozdja (MKGP):
+   peronospora 7–10 dni (brez dežja do 12), oidij z žveplom 5–6 dni, sicer največ 12 dni. */
+const datum = (iso, dni) => { const d = new Date(iso); d.setDate(d.getDate() + dni); return d; };
+function naslednje() {
+  const danes = new Date(new Date().toISOString().slice(0, 10));
+  return Object.keys(BOLEZNI).map(b => {
+    const z = dnevnik.find(x => x.b === b);
+    if (!z) return '';
+    let kdaj, opomba = '';
+    if (b === 'pero') { kdaj = [7, 10]; opomba = 'Če ni dežja, do 12 dni. Po več kot 30 mm dežja prej. Škropljenja končamo okoli sredine avgusta.'; }
+    else if (b === 'oidij' && z.n === 'Žveplo') kdaj = [5, 6];
+    else if (b === 'oidij') { kdaj = [12, 12]; opomba = 'V toplem in suhem vremenu razmik ne sme biti daljši.'; }
+    else return `<li><strong>${BOLEZNI[b]}:</strong> glede na razvojno fazo (glejte škropilni program).</li>`;
+    const [od, doo] = kdaj.map(n => datum(z.d, n));
+    const pozno = doo < danes ? ' <strong style="color:var(--grozd)">Rok je že potekel.</strong>' : '';
+    const cas = od.getTime() === doo.getTime() ? `najpozneje ${doo.toLocaleDateString('sl-SI')}` :
+      `med ${od.toLocaleDateString('sl-SI')} in ${doo.toLocaleDateString('sl-SI')}`;
+    return `<li><strong>${BOLEZNI[b]}:</strong> ${cas} (zadnjič ${z.n}).${pozno} <span class="opis">${opomba}</span></li>`;
+  }).join('');
+}
+
 function prikaziDnevnik() {
   if (!dnevnik.length) {
     $('dnevnik').innerHTML = '<p class="namig">Dnevnik je prazen. Pri izbrani snovi pritisnite »Zabeleži škropljenje«.</p>';
     return;
   }
-  $('dnevnik').innerHTML = `<table><thead><tr><th>Datum</th><th>Faza</th><th>Bolezen</th><th>Aktivna snov</th><th>FRAC</th><th></th></tr></thead><tbody>` +
+  $('dnevnik').innerHTML = `<div class="izid" style="margin:0 0 1rem"><h3 style="margin-top:0">Priporočeno naslednje škropljenje</h3>
+    <ul style="margin:0; padding-left:1.1rem">${naslednje()}</ul>
+    <p class="namig">Okvirno. Upoštevajte obvestila opazovalno-napovedovalne službe in razmik z etikete sredstva.</p></div><table><thead><tr><th>Datum</th><th>Faza</th><th>Bolezen</th><th>Aktivna snov</th><th>FRAC</th><th></th></tr></thead><tbody>` +
     dnevnik.map((z, i) => `<tr><td>${z.d.split('-').reverse().join('. ')}</td><td>${z.faza}</td><td>${BOLEZNI[z.b]}</td><td>${z.n}</td><td>${z.f}</td>
       <td><button data-i="${i}">Odstrani</button></td></tr>`).join('') + `</tbody></table>`;
 }
@@ -476,8 +535,9 @@ $('bolezen').addEventListener('change', () => { napolniZadnjo(); prikaziSeznam()
 $('pridelava').addEventListener('change', prikaziSeznam);
 $('zadnja').addEventListener('change', prikaziSeznam);
 ['pov', 'voda', 'rez', 'odm', 'enota', 'vrsta', 'visina'].forEach(id => $(id).addEventListener('input', izracun));
+$('pov').addEventListener('input', prikaziOpravila);
 
-prikaziProgram(); napolniZadnjo(); prikaziSeznam(); nastaviVodo(); prikaziDnevnik(); izracun();
+prikaziOpravila(); prikaziProgram(); napolniZadnjo(); prikaziSeznam(); nastaviVodo(); prikaziDnevnik(); izracun();
 </script>
 </body>
 </html>
