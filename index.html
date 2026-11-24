@@ -46,7 +46,7 @@
   .povezave a:hover { background: var(--galica-t); }
 
   /* izbirnik razvojne faze: stolpec raste z listno steno */
-  .faze { display: flex; gap: .4rem; overflow-x: auto; padding: 0 0 .5rem; margin: 0 0 .3rem; border: 0; }
+  .faze { min-width: 0; display: flex; gap: .4rem; overflow-x: auto; padding: 0 0 .5rem; margin: 0 0 .3rem; border: 0; }
   .faze legend { font-weight: 600; font-size: .95rem; padding: 0; margin-bottom: .5rem; }
   .faza { flex: 1 0 5.2rem; position: relative; }
   .faza input { position: absolute; opacity: 0; inset: 0; }
@@ -60,9 +60,15 @@
   .faza input:checked + span i { opacity: 1; }
   .faza input:focus-visible + span { outline: 3px solid var(--grozd); outline-offset: 2px; }
 
-  .drsnik { overflow-x: auto; background: #fff; border-left: 6px solid var(--list); border-radius: 0 6px 6px 0; }
-  .drsnik table { min-width: 42rem; }
-  .drsnik th, .drsnik td { padding: .6rem .7rem; }
+  .izid.karta dl { display: block; }
+  .izid.karta dt { font-size: .85rem; font-weight: 600; color: #55605c; }
+  .izid.karta dd { margin: 0 0 .7rem; text-align: left; font-weight: 400; }
+  .izid.karta dd:last-child { margin-bottom: 0; }
+  details { margin-top: 1.4rem; }
+  summary { cursor: pointer; font-weight: 800; font-size: 1.1rem; padding: .7rem 0; color: var(--galica); }
+  #vnosi { list-style: none; margin: 0 0 1rem; padding: 0; }
+  #vnosi li { display: flex; flex-wrap: wrap; gap: .2rem .8rem; align-items: center; justify-content: space-between; padding: .7rem 0; border-top: 1px solid var(--crta); }
+  .gumbi { display: flex; flex-wrap: wrap; gap: .6rem; }
 
   #seznam { list-style: none; margin: 0; padding: 0; }
   #seznam li { display: grid; grid-template-columns: 4.2rem 1fr auto; gap: .8rem; align-items: center; padding: .7rem 0; border-top: 1px solid var(--crta); }
@@ -102,12 +108,21 @@
   <section>
     <h2>Kaj škropite</h2>
 
-    <ul class="povezave">
-      <li><a href="https://spletni2.furs.gov.si/FFS/REGSR/" target="_blank" rel="noopener">FITO-INFO: register sredstev</a></li>
-      <li><a href="http://www.fito-info.si" target="_blank" rel="noopener">FITO-INFO: portal in obvestila</a></li>
-      <li><a href="https://vreme.arso.gov.si/" target="_blank" rel="noopener">Vremenska napoved za več dni (ARSO)</a></li>
-    </ul>
-    <h3>Koledar razvoja trte in bolezni</h3>
+    <fieldset class="faze" id="faze"><legend>Razvojna faza trte (kliknite okence)</legend></fieldset>
+    <p class="namig" id="fazaOpis"></p>
+
+    <h2 style="margin-top:1.4rem">Škropilni program</h2>
+    <div class="izid karta" id="program" style="margin-top:0"></div>
+
+    <div class="mreza" style="margin-top:1.4rem">
+      <div><label for="bolezen">Bolezen ali škodljivec</label><select id="bolezen"></select></div>
+      <div><label for="pridelava">Način pridelave</label>
+        <select id="pridelava"><option value="int">Integrirana</option><option value="eko">Ekološka</option></select></div>
+      <div><label for="zadnja">Skupina FRAC pri zadnjem škropljenju</label><select id="zadnja"></select></div>
+    </div>
+
+    <details id="koledarOkno">
+      <summary>Koledar razvoja trte, bolezni in opravila po mesecih</summary>
     <div style="overflow-x:auto; background:#fff; border-radius:6px; padding:.6rem">
       <svg id="koledar" viewBox="0 0 720 292" style="min-width:640px; display:block; font-family:inherit"
            role="img" aria-label="Koledar razvojnih faz trte in nevarnosti bolezni po mesecih"></svg>
@@ -235,34 +250,22 @@
           mesec(Math.floor((f.a + f.b) / 2));
         });
         oznaci();
+        // ob odprtju koledarja pomakni drsnik na današnji dan
+        document.getElementById('koledarOkno').addEventListener('toggle', e => {
+          if (!e.target.open) return;
+          const okno = svg.parentElement;
+          okno.scrollLeft = X(danes) * svg.clientWidth / 720 - okno.clientWidth / 2;
+        });
       });
     })();
     </script>
-    <fieldset class="faze" id="faze"><legend>Razvojna faza trte (kliknite okence)</legend></fieldset>
-    <p class="namig" id="fazaOpis"></p>
-
-    <h3>Škropilni program</h3>
-    <div class="drsnik">
-      <table>
-        <thead>
-          <tr><th>Varstveni ukrep</th><th>Čas</th><th>Bolezni in škodljivci</th><th>Priporočena sredstva</th><th>Opomba</th></tr>
-        </thead>
-        <tbody id="program"></tbody>
-      </table>
-    </div>
-
-    <div class="mreza" style="margin-top:1.4rem">
-      <div><label for="bolezen">Bolezen</label><select id="bolezen"></select></div>
-      <div><label for="pridelava">Način pridelave</label>
-        <select id="pridelava"><option value="int">Integrirana</option><option value="eko">Ekološka</option></select></div>
-      <div><label for="zadnja">Skupina FRAC pri zadnjem škropljenju</label><select id="zadnja"></select></div>
-    </div>
+    </details>
   </section>
 
   <section>
     <h2>Primerne aktivne snovi</h2>
     <ul id="seznam"></ul>
-    <p class="namig">Številka na levi je skupina FRAC. Menjavajte skupine, da preprečite odpornost. Sredstvo s to aktivno snovjo poiščite v registru FITO-INFO.</p>
+    <p class="namig">Številka na levi je skupina FRAC. Menjavajte skupine, da preprečite odpornost. Sredstvo s to aktivno snovjo poiščite v registru FFS (povezava na dnu strani).</p>
   </section>
 
   <section>
@@ -283,11 +286,28 @@
   <section>
     <h2>Dnevnik škropljenj</h2>
     <div id="dnevnik"></div>
+    <div class="gumbi">
+      <button id="izvozi">Shrani kopijo dnevnika</button>
+      <button id="uvozi">Naloži kopijo</button>
+      <input type="file" id="datoteka" accept=".json,application/json" hidden>
+    </div>
+    <p class="namig">Dnevnik je shranjen samo v tem brskalniku. Kopija je datoteka, ki jo lahko shranite ali prenesete na drug telefon.</p>
+  </section>
+
+  <section>
+    <h2>Uradni viri</h2>
+    <ul class="povezave">
+      <li><a href="https://spletni2.furs.gov.si/FFS/REGSR/" target="_blank" rel="noopener">Register FFS (UVHVVR)</a></li>
+      <li><a href="https://agromet.mkgp.gov.si/APP2/Prognostika/Index" target="_blank" rel="noopener">Prognostična obvestila za varstvo rastlin</a></li>
+      <li><a href="https://www.gov.si/podrocja/kmetijstvo-gozdarstvo-in-prehrana/varstvo-rastlin/zdravje-rastlin/bolezni-in-skodljivci-rastlin/zlata-trsna-rumenica" target="_blank" rel="noopener">Zlata trsna rumenica (gov.si)</a></li>
+      <li><a href="https://vreme.arso.gov.si/" target="_blank" rel="noopener">Vremenska napoved za več dni (ARSO)</a></li>
+    </ul>
   </section>
 </main>
 
 <footer>
-  <p><strong>Podatki so okvirni in služijo kot primer.</strong> Registracije sredstev se spreminjajo. Pred uporabo preverite register FITO-INFO in upoštevajte etiketo sredstva: odmerek, karenco, največje število škropljenj in dovoljene razvojne faze. Roke škropljenj uskladite z obvestili opazovalno-napovedovalne službe.</p>
+  <p><strong>Podatki so okvirni in služijo kot primer.</strong> Registracije sredstev se spreminjajo. Pred uporabo preverite register FFS in upoštevajte etiketo sredstva: odmerek, karenco, največje število škropljenj in dovoljene razvojne faze. Roke škropljenj uskladite z obvestili opazovalno-napovedovalne službe.</p>
+  <p>Zadnja posodobitev strani: november 2026.</p>
 </footer>
 
 <script>
@@ -340,10 +360,10 @@ const PROGRAM = {
        opomba: 'Strogo upoštevamo karenco do trgatve. Pri zgodnjih sortah to škropljenje pogosto odpade.' }
 };
 
-const BOLEZNI = { pero: 'Peronospora', oidij: 'Oidij (pepelovka)', botr: 'Siva plesen (botritis)', pega: 'Črna pegavost' };
+const BOLEZNI = { pero: 'Peronospora', oidij: 'Oidij (pepelovka)', botr: 'Siva plesen (botritis)', pega: 'Črna pegavost', skrz: 'Ameriški škržatek (zlata trsna rumenica)' };
 
 /* Primeri aktivnih snovi. f = skupina FRAC, b = bolezni, faze = okvirno primerne faze.
-   Seznam dopolnite in uskladite z veljavnim registrom FITO-INFO. */
+   Seznam dopolnite in uskladite z veljavnim registrom FFS. */
 const SNOVI = [
   { n: 'Bakrovi pripravki',  f: 'M01', b: ['pero', 'pega'],  faze: [1,2,5,6,7],     eko: true,  t: 'kontaktno' },
   { n: 'Žveplo',             f: 'M02', b: ['oidij', 'pega'], faze: [1,2,3,4,5,6,7], eko: true,  t: 'kontaktno' },
@@ -402,8 +422,10 @@ const veckratna = f => f.startsWith('M') || f === 'NC';   // večmestno delovanj
 function prikaziProgram() {
   const f = faza(), p = PROGRAM[f.id];
   $('fazaOpis').textContent = f.ime;
-  $('program').innerHTML = `<tr><td><strong>${p.ukrep}</strong></td><td>${p.cas}</td><td>${p.cilj}</td>
-    <td>${p.sredstva}</td><td>${p.opomba} Poraba vode ${f.voda[0]}–${f.voda[1]} l/ha.</td></tr>`;
+  $('program').innerHTML = `<h3 style="margin-top:0">${p.ukrep}</h3><dl>
+    <dt>Čas</dt><dd>${p.cas}</dd><dt>Bolezni in škodljivci</dt><dd>${p.cilj}</dd>
+    <dt>Priporočena sredstva</dt><dd>${p.sredstva}</dd>
+    <dt>Opomba</dt><dd>${p.opomba} Poraba vode ${f.voda[0]}–${f.voda[1]} l/ha.</dd></dl>`;
 }
 
 function napolniZadnjo() {
@@ -424,6 +446,10 @@ function prikaziSeznam() {
     .sort((x, y) => ista(x) - ista(y));
   const ul = $('seznam');
   ul.innerHTML = '';
+  if (b === 'skrz') {
+    ul.innerHTML = `<li style="display:block">Ameriški škržatek prenaša zlato trsno rumenico. Roke zatiranja po območjih Slovenije so v prognostičnih obvestilih (povezava na dnu strani), sredstva pa v registru FFS. Na območjih zlate trsne rumenice je zatiranje obvezno. Večina dovoljenih sredstev je nevarnih čebelam: škropite šele po cvetenju trte in po košnji cvetoče podrasti.</li>`;
+    return;
+  }
   if (!izbor.length) {
     ul.innerHTML = `<li style="display:block">Za to kombinacijo ni primerne snovi na seznamu. V tej fazi škropljenje proti tej bolezni običajno ni potrebno. Izberite drugo fazo ali bolezen.</li>`;
     return;
@@ -533,15 +559,37 @@ function prikaziDnevnik() {
   }
   $('dnevnik').innerHTML = `<div class="izid" style="margin:0 0 1rem"><h3 style="margin-top:0">Priporočeno naslednje škropljenje</h3>
     <ul style="margin:0; padding-left:1.1rem">${naslednje()}</ul>
-    <p class="namig">Okvirno. Upoštevajte obvestila opazovalno-napovedovalne službe in razmik z etikete sredstva.</p></div><table><thead><tr><th>Datum</th><th>Faza</th><th>Bolezen</th><th>Aktivna snov</th><th>FRAC</th><th></th></tr></thead><tbody>` +
-    dnevnik.map((z, i) => `<tr><td>${z.d.split('-').reverse().join('. ')}</td><td>${z.faza}</td><td>${BOLEZNI[z.b]}</td><td>${z.n}</td><td>${z.f}</td>
-      <td><button data-i="${i}">Odstrani</button></td></tr>`).join('') + `</tbody></table>`;
+    <p class="namig">Okvirno. Upoštevajte obvestila opazovalno-napovedovalne službe in razmik z etikete sredstva.</p></div><ul id="vnosi">` +
+    dnevnik.map((z, i) => `<li><div><strong>${z.d.split('-').reverse().join('. ')}</strong> · ${z.faza}<br>
+      ${BOLEZNI[z.b]}: ${z.n} <span class="opis">(FRAC ${z.f})</span></div><button data-i="${i}">Odstrani</button></li>`).join('') + `</ul>`;
 }
 $('dnevnik').addEventListener('click', e => {
   if (e.target.dataset.i === undefined) return;
   dnevnik.splice(+e.target.dataset.i, 1);
   shrani(); prikaziDnevnik(); napolniZadnjo(); prikaziSeznam();
 });
+
+/* --- varnostna kopija dnevnika --- */
+$('izvozi').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(dnevnik, null, 1)], { type: 'application/json' }));
+  a.download = `dnevnik-skropljenj-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+$('uvozi').onclick = () => $('datoteka').click();
+$('datoteka').onchange = async e => {
+  try {
+    const vnosi = JSON.parse(await e.target.files[0].text());
+    if (!Array.isArray(vnosi) || !vnosi.every(z => z.d && BOLEZNI[z.b] && z.n)) throw 0;
+    if (dnevnik.length && !confirm(`Zamenjam ${dnevnik.length} vnosov v dnevniku z ${vnosi.length} vnosi iz kopije?`)) return;
+    dnevnik = vnosi;
+    shrani(); prikaziDnevnik(); napolniZadnjo(); prikaziSeznam();
+  } catch (err) {
+    alert('Datoteka ni veljavna kopija dnevnika.');
+  }
+  e.target.value = '';
+};
 
 /* --- povezave med deli strani --- */
 $('faze').addEventListener('change', () => { prikaziProgram(); prikaziSeznam(); nastaviVodo(); izracun(); });
