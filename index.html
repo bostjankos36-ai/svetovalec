@@ -94,17 +94,61 @@
   th { font-weight: 700; }
   footer { padding-top: 1.2rem; padding-bottom: 2.5rem; font-size: .9rem; }
   footer strong { color: var(--grozd); }
+  /* zavihka trta / vrt */
+  .zavihki { display: flex; gap: .5rem; margin-top: 1.2rem; }
+  .zavihki button { background: transparent; color: #fff; border-color: #fff; font-size: 1rem; padding: .55rem 1.1rem; }
+  .zavihki button[aria-selected=true] { background: #fff; color: var(--galica); }
+  .meseci { display: flex; gap: .35rem; overflow-x: auto; padding-bottom: .4rem; margin: 1rem 0 0; }
+  .meseci button { flex: 0 0 auto; padding: .45rem .6rem; }
+  .meseci button[aria-pressed=true] { background: var(--galica); color: #fff; }
+  .vrt-blok { margin: 0 0 .9rem; }
+  .vrt-blok:last-child { margin-bottom: 0; }
+  .vrt-blok b { display: block; font-size: .85rem; color: var(--list); }
   @media (max-width: 30rem) { #seznam li { grid-template-columns: 3.6rem 1fr; } #seznam button { grid-column: 2; justify-self: start; } }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Škropilni svetovalec za vinsko trto</h1>
-  <p>Izberite razvojno fazo in bolezen. Dobite škropilni program, primerne aktivne snovi, okvirno porabo vode in količino sredstva na rezervoar.</p>
+  <h1 id="naslov">Škropilni svetovalec za vinsko trto</h1>
+  <p id="podnaslov">Izberite razvojno fazo in bolezen. Dobite škropilni program, primerne aktivne snovi, okvirno porabo vode in količino sredstva na rezervoar.</p>
+  <div class="zavihki" role="tablist">
+    <button role="tab" id="tabTrta" aria-controls="trta" aria-selected="true">Vinska trta</button>
+    <button role="tab" id="tabVrt" aria-controls="vrt" aria-selected="false">Vrt</button>
+  </div>
 </header>
 
-<main>
+<main id="vrt" role="tabpanel" hidden>
+  <section>
+    <h2>Kaj delati ta mesec</h2>
+    <div class="mreza">
+      <div><label for="vrtKje">Kje</label>
+        <select id="vrtKje"><option value="rast">Pokrit rastlinjak (neogrevan)</option><option value="greda">Visoka greda (na prostem)</option></select></div>
+    </div>
+    <div class="meseci" id="vrtMeseci"></div>
+    <div class="izid karta" id="vrtMesec"></div>
+  </section>
+
+  <section>
+    <h2>Vrtnine in zelišča</h2>
+    <label for="vrtRastlina">Izberite rastlino</label>
+    <select id="vrtRastlina"></select>
+    <div class="izid karta" id="vrtKarta"></div>
+    <p class="namig">Razdalja: prva številka je razmik v vrsti, druga med vrstami. V visoki gredi lahko sadite nekoliko gosteje.</p>
+  </section>
+
+  <section>
+    <h2>Dobro je vedeti</h2>
+    <ul style="margin:0; padding-left:1.1rem">
+      <li>Termini so okvirni za nižine severovzhodne Slovenije (Ptuj). Prilagodite jih vremenu v tekočem letu.</li>
+      <li>Na prosto sadimo vrtnine, občutljive na mraz, šele po ledenih možeh (okoli 15. maja), v neogrevan rastlinjak približno 2–3 tedne prej.</li>
+      <li>Rastlinjak je spomladi in jeseni okoli 3–4 tedne pred prostim, visoka greda okoli 1–2 tedna.</li>
+      <li>Iste družine (razhudnikovke, kapusnice, bučnice) ne sadite na isto mesto več let zapored, da se ne namnožijo bolezni.</li>
+    </ul>
+  </section>
+</main>
+
+<main id="trta" role="tabpanel">
   <section>
     <h2>Kaj škropite</h2>
 
@@ -306,7 +350,7 @@
 </main>
 
 <footer>
-  <p><strong>Podatki so okvirni in služijo kot primer.</strong> Registracije sredstev se spreminjajo. Pred uporabo preverite register FFS in upoštevajte etiketo sredstva: odmerek, karenco, največje število škropljenj in dovoljene razvojne faze. Roke škropljenj uskladite z obvestili opazovalno-napovedovalne službe.</p>
+  <p id="nogaTrta"><strong>Podatki so okvirni in služijo kot primer.</strong> Registracije sredstev se spreminjajo. Pred uporabo preverite register FFS in upoštevajte etiketo sredstva: odmerek, karenco, največje število škropljenj in dovoljene razvojne faze. Roke škropljenj uskladite z obvestili opazovalno-napovedovalne službe.</p>
   <p>Zadnja posodobitev strani: november 2026.</p>
 </footer>
 
@@ -600,6 +644,144 @@ $('zadnja').addEventListener('change', prikaziSeznam);
 $('pov').addEventListener('input', prikaziOpravila);
 
 prikaziOpravila(); prikaziProgram(); napolniZadnjo(); prikaziSeznam(); nastaviVodo(); prikaziDnevnik(); izracun();
+
+/* ===== VRT: rastlinjak in visoka greda ===== */
+/* Na mesec: notri = setev sadik v hiši (okenska polica), rast = pokrit rastlinjak, greda = visoka greda,
+   zel = zelišča. Vsak prostor: [sejemo, sadimo, pobiramo, opravila]. Okvirno za Štajersko nižino. */
+const VRT = [
+  { notri: 'Konec meseca paprika, čili in zelena.',
+    rast: ['—', '—', 'Motovilec, špinača, rukola (če so prezimili).', 'Ob sončnih dneh zračite. Odstranite sneg s strehe. Očistite lončke, načrtujte kolobar, naročite semena.'],
+    greda: ['—', '—', 'Por, ohrovt, zimski radič.', 'Greda naj bo pokrita z zastirko ali kopreno. Preverite mrežo proti voluharju.'],
+    zel: 'Peteršilj in drobnjak v lončku na okenski polici.' },
+  { notri: 'Paprika, čili, jajčevec, zelena; konec meseca paradižnik za rastlinjak.',
+    rast: ['Konec meseca redkvica, špinača, rukola, solata za rezanje.', '—', 'Motovilec, špinača.', 'Zračite ob toplih dneh. Prerahljajte tla in dodajte zrel kompost.'],
+    greda: ['—', '—', 'Por, ohrovt.', 'Dodajte 2–3 cm zrelega komposta. Pripravite kopreno za marec.'],
+    zel: 'Peteršilj in drobnjak sejte v lončke.' },
+  { notri: 'Paradižnik, bazilika, kapusnice (zelje, cvetača, brokoli, koleraba), solata, por.',
+    rast: ['Redkvica, korenje, špinača, rukola, solata, grah, rdeča pesa.', 'Sadike solate in kolerabe, čebulček.', 'Redkvica, špinača, rukola, motovilec.', 'Ob sončnih dneh odprite vrata. Ob napovedani zmrzali rastline pokrijte s kopreno.'],
+    greda: ['Grah, redkvica, špinača, korenje, peteršilj, rukola (pod kopreno).', 'Čebulček; konec meseca sadike solate pod kopreno.', 'Por, motovilec.', 'Odkrijte gredo, prerahljajte in dodajte kompost.'],
+    zel: 'Sejte peteršilj, koper, drobnjak. Razdelite in presadite drobnjak, meliso in meto.' },
+  { notri: 'Kumare, bučke, melone, bazilika. Pikirajte paradižnik in papriko.',
+    rast: ['Korenje, rdeča pesa, solata, redkvica, koper.', 'Solata, koleraba, zgodnje zelje; konec meseca paradižnik, če so noči tople.', 'Redkvica, solata, špinača, mlada čebula.', 'Redno zračite, zalivajte zjutraj. Postavite opore za paradižnik. Pazite na nočno pozebo.'],
+    greda: ['Korenje, pesa, solata, redkvica, peteršilj, blitva.', 'Sadike solate, kolerabe, zelja, brokolija; zgodnji krompir.', 'Redkvica, špinača, rukola.', 'Ob napovedani pozebi pokrijte s kopreno. Sadike utrjujte (čez dan zunaj).'],
+    zel: 'Sejte koper in koriander. Sadite timijan, žajbelj, origano; rožmarin v lonec.' },
+  { notri: 'Do sredine meseca še kumare in bučke za presajanje.',
+    rast: ['Kumare, fižol, bazilika.', 'Paradižnik, paprika, čili, jajčevec, kumare, melone.', 'Solata, koleraba, redkvica, grah.', 'Ob vročini senčite z mrežo in zračite tudi ponoči. Zalivajte ob tleh. Začnite zalistati paradižnik.'],
+    greda: ['Nizki fižol, korenje, solata, pesa; po ledenih možeh kumare in bučke.', 'Po ledenih možeh (15. 5.) paradižnik, paprika, bučke, kumare, bazilika.', 'Solata, redkvica, špinača, koleraba.', 'Zastirka (slama, posušena trava) zadrži vlago. Kapusnice pokrijte z mrežo proti bolhačem.'],
+    zel: 'Baziliko presadite ven po ledenih možeh. Režite drobnjak, peteršilj, meto in meliso.' },
+  { notri: 'V setvenico zelje, ohrovt, brokoli in cvetača za jesen.',
+    rast: ['Fižol, solata, odporna na vročino.', '—', 'Kumare, bučke, solata, koleraba; konec meseca prvi paradižnik.', 'Zalistajte in privezujte paradižnik. Zalivajte redno in globoko. Senčite. Pregledujte na pršice in ščitkarja.'],
+    greda: ['Fižol, solata, korenje za jesen, pesa; konec meseca endivija.', 'Por, zelena.', 'Solata, grah, bučke, kumare; konec meseca česen.', 'Zalivajte zjutraj, obnavljajte zastirko. Prazna mesta takoj znova posejte.'],
+    zel: 'Pred cvetenjem porežite meto, meliso, žajbelj in origano za sušenje.' },
+  { notri: 'Sadike za jesen: solata, endivija, radič, kitajski kapus.',
+    rast: ['Endivija, radič, fižol.', '—', 'Paradižnik, paprika, kumare, jajčevec, bučke.', 'Konec meseca prikrajšajte vrhove paradižnika. Odstranjujte spodnje liste. Senčite in zalivajte.'],
+    greda: ['Fižol (zadnja setev), endivija, radič, črna redkev; konec meseca kitajski kapus.', 'Sadike jesenskih kapusnic (ohrovt, brokoli, cvetača), por.', 'Paradižnik, bučke, kumare, fižol, čebula, česen, korenje.', 'Pobirajte sproti. Kapusnice zaščitite z mrežo pred kapusovim belinom.'],
+    zel: 'Sušite zelišča. Posejte peteršilj za jesen.' },
+  { notri: '—',
+    rast: ['Solata, rukola, redkvica; konec meseca motovilec.', 'Konec meseca sadike solate in endivije.', 'Paradižnik, paprika, jajčevec, kumare, melone.', 'Senčite in zalivajte. Odstranite izrojene in bolne rastline.'],
+    greda: ['Rukola, redkvica, solata; konec meseca motovilec in špinača.', 'Endivija, radič, solata, kitajski kapus.', 'Paradižnik, paprika, fižol, bučke, korenje, pesa, čebula.', 'Na prazna mesta posejte zeleno gnojenje (facelija, gorjušica) ali jesenske vrtnine.'],
+    zel: 'Posejte peteršilj in koriander za jesen.' },
+  { notri: '—',
+    rast: ['Motovilec, špinača, rukola, redkvica, zimska solata.', 'Zimska solata, endivija.', 'Paradižnik, paprika, jajčevec, melone.', 'Ponoči zapirajte. Konec meseca oberite zelene paradižnike, da dozorijo v hiši.'],
+    greda: ['Motovilec, špinača.', 'Zimska solata, čebulček za prezimitev, jagode.', 'Korenje, pesa, por, kapusnice, buče.', 'Na prazna mesta posejte zeleno gnojenje.'],
+    zel: 'Razdelite drobnjak in meto. Rožmarin in lovor presadite v lonec.' },
+  { notri: '—',
+    rast: ['Do sredine meseca motovilec in špinača.', 'Zimska solata, čebulček.', 'Zadnja paprika, solata, rukola, redkvica.', 'Odstranite ostanke paradižnika in kumar (bolnih ne dajte na kompost). Dodajte kompost.'],
+    greda: ['—', 'Česen, zimski čebulček.', 'Korenje, pesa, zelena, por, buče, kapusnice.', 'Pospravite gredo. Kompost in listje uporabite kot zastirko.'],
+    zel: 'Rožmarin in lovor pred mrazom prenesite na zaščiteno. Timijan in žajbelj zastrite.' },
+  { notri: '—',
+    rast: ['—', '—', 'Motovilec, špinača, rukola, solata, redkvica.', 'Zračite ob sončnih dneh. Ob zmrzali pokrijte rastline s kopreno. Očistite folijo ali steklo za več svetlobe.'],
+    greda: ['—', 'Česen, dokler tla niso zamrznjena.', 'Por, ohrovt, zelena, korenje, zimski radič.', 'Gredo pokrijte z listjem ali kompostom, zimske vrtnine s kopreno.'],
+    zel: 'Peteršilj presadite v lonček na okensko polico.' },
+  { notri: '—',
+    rast: ['—', '—', 'Motovilec, špinača.', 'Ob snegu očistite streho. Zračite ob sončnih dneh.'],
+    greda: ['—', '—', 'Por, ohrovt, zimski radič.', 'Načrtujte kolobar za prihodnje leto.'],
+    zel: '—' }
+];
+
+/* Rastline: [ime, setev, sajenje, razdalja v cm, opomba] */
+const RASTLINE = [
+  ['Paradižnik', 'Notri februar–marec', 'Rastlinjak od konca aprila, na prosto po 15. maju', '50 × 70', 'Zalistajte, privezujte, zalivajte ob tleh. Ne za krompirjem ali na isto mesto vsako leto.'],
+  ['Paprika in čili', 'Notri februar', 'Rastlinjak maj, na prosto konec maja', '40 × 50', 'Potrebuje toploto; v rastlinjaku rodi bolje.'],
+  ['Jajčevec', 'Notri februar–marec', 'Rastlinjak maj', '50 × 60', 'Najbolj toploljuben, najbolje v rastlinjaku.'],
+  ['Kumare', 'Notri april ali neposredno maj', 'Rastlinjak maj, na prosto po 15. maju', '40 × 100', 'Ob opori ali mreži. Redno zalivajte s postano vodo.'],
+  ['Bučke', 'Notri april ali neposredno po 15. maju', 'Na prosto po 15. maju', '80 × 100', 'Ena do dve rastlini zadoščata za družino.'],
+  ['Melone', 'Notri april', 'Rastlinjak maj', '60 × 100', 'V rastlinjaku, ob opori.'],
+  ['Solata', 'Marec–september (notri ali neposredno)', 'Marec–september', '25 × 30', 'Sejte vsake 2–3 tedne. Poleti sorte, odporne na vročino.'],
+  ['Motovilec', 'Avgust–oktober, neposredno', '—', '5 × 10', 'Prezimi; v rastlinjaku pobirate vso zimo.'],
+  ['Špinača', 'Marec–april in avgust–oktober', '—', '5 × 20', 'Poleti hitro cveti.'],
+  ['Rukola', 'Marec–september', '—', '3 × 15', 'Poleti pokrijte z mrežo proti bolhačem.'],
+  ['Redkvica', 'Marec–september', '—', '3 × 10', 'Pobirajte mlado, sicer postane pekoča in olesenela.'],
+  ['Korenje', 'Marec–julij, neposredno', '—', '4 × 20', 'Rahla tla brez svežega gnoja. Zredčite.'],
+  ['Rdeča pesa', 'April–julij, neposredno', '—', '10 × 25', 'Zredčite, ko so rastline visoke 5 cm.'],
+  ['Blitva', 'April–julij', 'Maj–avgust', '30 × 40', 'Režite zunanje liste, srce pustite.'],
+  ['Nizki fižol', 'Maj–julij, neposredno', '—', '8 × 40', 'Ne pred ledenimi možmi, seme rado zgnije v mrzlih tleh.'],
+  ['Grah', 'Marec–april, neposredno', '—', '5 × 30', 'Visoke sorte ob mreži.'],
+  ['Koleraba', 'Notri marec–julij', 'April–avgust', '25 × 25', 'Zalivajte enakomerno, da ne poka.'],
+  ['Zelje, brokoli, cvetača', 'Notri marec ali junij (za jesen)', 'April–maj ali julij', '50 × 60', 'Mreža proti bolhačem in kapusovemu belinu.'],
+  ['Por', 'Notri marec', 'Maj–julij', '15 × 30', 'Sadite globoko, da je bel del daljši.'],
+  ['Čebula (čebulček)', '—', 'Marec–april ali september–oktober', '8 × 20', 'Pobirajte, ko se listi polegajo.'],
+  ['Česen', '—', 'Oktober–november', '10 × 25', 'Pobirajte, ko porumeni polovica listov (junij–julij).'],
+  ['Bazilika', 'Notri april', 'Ven po 15. maju, rastlinjak maj', '25 × 25', 'Odščipnite cvetove za več listov.'],
+  ['Peteršilj', 'Marec–avgust, neposredno', '—', '3 × 20', 'Seme kali počasi (3–4 tedne). Namočite ga čez noč.'],
+  ['Koper', 'Marec–julij, neposredno', '—', '10 × 25', 'Ne mara presajanja.'],
+  ['Drobnjak', 'Marec–april', 'April–maj ali september', '25 × 25', 'Trajnica. Vsakih nekaj let razdelite šop.'],
+  ['Meta in melisa', '—', 'April–maj ali september', '30 × 30', 'Trajnici. Meto sadite v zakopan lonec, ker se razrašča.'],
+  ['Timijan, žajbelj, origano', 'Notri marec', 'April–maj', '30 × 30', 'Trajnice. Sončno, suho mesto, brez gnojenja.'],
+  ['Rožmarin', '—', 'Maj, najbolje v lonec', '40 × 40', 'Pozimi na zaščitenem, svetlem in hladnem mestu.']
+];
+
+let vrtMesec = new Date().getMonth();
+MESEC.forEach((m, i) => {
+  const b = document.createElement('button');
+  b.textContent = m.slice(0, 3);
+  b.dataset.m = i;
+  $('vrtMeseci').appendChild(b);
+});
+$('vrtMeseci').addEventListener('click', e => {
+  if (e.target.dataset.m === undefined) return;
+  vrtMesec = +e.target.dataset.m;
+  prikaziVrt();
+});
+
+function prikaziVrt() {
+  const v = VRT[vrtMesec], [sej, sad, pob, op] = v[$('vrtKje').value];
+  $('vrtMeseci').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.m === vrtMesec));
+  const blok = (n, t) => `<div class="vrt-blok"><b>${n}</b>${t}</div>`;
+  $('vrtMesec').innerHTML = `<h3 style="margin-top:0">${MESEC[vrtMesec]}${vrtMesec === new Date().getMonth() ? ' (ta mesec)' : ''}</h3>` +
+    blok('Sejemo', sej) + blok('Sadimo', sad) + blok('Pobiramo', pob) + blok('Opravila', op) +
+    blok('Sadike v hiši (okenska polica)', v.notri) + blok('Zelišča', v.zel);
+}
+
+RASTLINE.forEach((r, i) => $('vrtRastlina').add(new Option(r[0], i)));
+function prikaziRastlino() {
+  const [ime, setev, sajenje, razdalja, opomba] = RASTLINE[$('vrtRastlina').value];
+  $('vrtKarta').innerHTML = `<h3 style="margin-top:0">${ime}</h3><dl>
+    <dt>Setev</dt><dd>${setev}</dd><dt>Sajenje ali presajanje</dt><dd>${sajenje}</dd>
+    <dt>Razdalja (cm)</dt><dd>${razdalja}</dd><dt>Nasvet</dt><dd>${opomba}</dd></dl>`;
+}
+$('vrtKje').addEventListener('change', prikaziVrt);
+$('vrtRastlina').addEventListener('change', prikaziRastlino);
+prikaziVrt(); prikaziRastlino();
+
+/* --- zavihka --- */
+const NASLOVI = {
+  trta: ['Škropilni svetovalec za vinsko trto', $('podnaslov').textContent],
+  vrt: ['Svetovalec za vrt', 'Setev, sajenje, pobiranje in opravila po mesecih za pokrit rastlinjak in visoko gredo.']
+};
+function zavihek(t) {
+  ['trta', 'vrt'].forEach(x => {
+    $(x).hidden = x !== t;
+    $(x === 'trta' ? 'tabTrta' : 'tabVrt').setAttribute('aria-selected', x === t);
+  });
+  $('nogaTrta').hidden = t !== 'trta';
+  [$('naslov').textContent, $('podnaslov').textContent] = NASLOVI[t];
+  document.title = NASLOVI[t][0];
+  history.replaceState(null, '', t === 'vrt' ? '#vrt' : location.pathname + location.search);
+}
+$('tabTrta').onclick = () => zavihek('trta');
+$('tabVrt').onclick = () => zavihek('vrt');
+if (location.hash === '#vrt') zavihek('vrt');
 </script>
 </body>
 </html>
